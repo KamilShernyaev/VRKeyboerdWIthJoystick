@@ -18,8 +18,8 @@ namespace BNG
                 currentKey.ThisButton.image.color = Color.white;
 
             currentKey = key;
-            key.ThisButton.image.color = Color.yellow;
-            
+            key.ThisButton.image.color = Color.green;
+
         }
 
         public void ResetHighlight()

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace BNG
 {
@@ -14,7 +13,6 @@ namespace BNG
 
         [SerializeField] private GameObject parent;
         [SerializeField] private CharacterController player;
-        [SerializeField] private TeleportDestination teleportDestination;
         [SerializeField] private List<Keyboard> keyboards;
         [SerializeField] private float speed;
         [SerializeField] private float inputDelay = 0.03f;
@@ -83,10 +81,11 @@ namespace BNG
         {
             if (!IsJoystickInput)
                 return;
+            thumbstickAxis = Vector2.Lerp(thumbstickAxis, Vector2.zero, 0.1f);
 
-            thumbstickAxis = IsLeftHanded
-                ? InputBridge.Instance.LeftThumbstickAxis
-                : InputBridge.Instance.RightThumbstickAxis;
+            // thumbstickAxis = IsLeftHanded
+            //     ? InputBridge.Instance.LeftThumbstickAxis
+            //     : InputBridge.Instance.RightThumbstickAxis;
 
             var thumbstickInputDown = IsLeftHanded
                 ? InputBridge.Instance.LeftTriggerDown
@@ -149,8 +148,11 @@ namespace BNG
             currentKeyboard.gameObject.SetActive(false);
             currentKeyboard = keyboards[newKeyboardIndex];
             currentKeyboard.gameObject.SetActive(true);
-            currentRow = currentKeyboard.keyboardRows[0];
-            currentKey = currentRow.keyboardKeys[0];
+            if (navigationMode == NavigationMode.Key)
+            {
+                currentRow = currentKeyboard.keyboardRows[0];
+                currentKey = currentRow.keyboardKeys[0];
+            }
 
             keyboardKeyHighlighter.HighlightKey(currentKey);
         }
@@ -193,5 +195,6 @@ namespace BNG
         public void PreviousKeyboard() => SwitchKeyboard(-1);
 
         public void SetSelectedKey(VRKeyboardKey keyboardKey) => currentKey = keyboardKey;
+        public void SetCurrentKeyboard(Keyboard keyboard) => currentKeyboard = keyboard;
     }
 }

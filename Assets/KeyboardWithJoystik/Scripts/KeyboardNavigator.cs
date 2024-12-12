@@ -5,13 +5,16 @@ namespace BNG
 {
     public class KeyboardNavigator
     {
+        private const float NavigationInterval = 0.1f;
+        
         private readonly Keyboard currentKeyboard;
         private readonly KeyboardKeyHighlighter keyboardKeyHighlighter;
         private readonly VRKeyboardWithJoystick keyboardWithJoystick;
         private VRKeyboardKey currentKey;
         private KeyboardRow currentRow;
         private bool isJoystickInput;
-        private bool isCursorInput; 
+        private bool isCursorInput;
+        private float lastNavigationTime;
 
         public KeyboardNavigator(VRKeyboardKey currentKey,
             KeyboardRow currentRow, Keyboard currentKeyboard,
@@ -28,7 +31,7 @@ namespace BNG
 
         private void OnNavigationModeChanged(VRKeyboardWithJoystick.NavigationMode obj)
         {
-            if (obj != VRKeyboardWithJoystick.NavigationMode.Key )
+            if (obj != VRKeyboardWithJoystick.NavigationMode.Key)
                 keyboardKeyHighlighter.ResetHighlight();
         }
 
@@ -47,7 +50,11 @@ namespace BNG
 
             if (thumbstickAxis == Vector2.zero)
                 return;
-            
+            if (Time.time - lastNavigationTime < NavigationInterval)
+                return;
+
+            lastNavigationTime = Time.time;
+
             if (Mathf.Abs(thumbstickAxis.x) > Mathf.Abs(thumbstickAxis.y))
             {
                 if (thumbstickAxis.x > 0) NextKey();
@@ -88,6 +95,7 @@ namespace BNG
                 var newKeyIndex = Mathf.RoundToInt(ratio * (keyboardKeys.Count - 1));
                 newKeyIndex = Mathf.Clamp(newKeyIndex, 0, keyboardKeys.Count - 1);
 
+                keyboardWithJoystick.SetCurrentKeyboard(currentKeyboard);
                 keyboardWithJoystick.SetSelectedKey(keyboardKeys[newKeyIndex]);
                 keyboardKeyHighlighter.HighlightKey(keyboardKeys[newKeyIndex]);
             }
