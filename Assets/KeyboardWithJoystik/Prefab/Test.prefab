@@ -21274,7 +21274,6 @@ MonoBehaviour:
   KeyPressSound: {fileID: 8300000, guid: f2dc589f7839f104cb317f751adf6757, type: 3}
   parent: {fileID: 4179125254455378048}
   player: {fileID: 0}
-  teleportDestination: {fileID: 790429989537934170}
   keyboards:
   - {fileID: 4464684905820130265}
   - {fileID: 4464684904571848089}

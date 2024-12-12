@@ -26,7 +26,6 @@ namespace BNG
         private KeyboardRow currentRow;
         private Keyboard currentKeyboard;
         private float lastThumbstickInputTime;
-        [SerializeField] private Vector2 thumbstickAxis;
         private SmoothLocomotion smoothLocomotion;
         private PlayerRotation playerRotation;
         private UIPointer[] pointers;
@@ -81,11 +80,10 @@ namespace BNG
         {
             if (!IsJoystickInput)
                 return;
-            thumbstickAxis = Vector2.Lerp(thumbstickAxis, Vector2.zero, 0.1f);
 
-            // thumbstickAxis = IsLeftHanded
-            //     ? InputBridge.Instance.LeftThumbstickAxis
-            //     : InputBridge.Instance.RightThumbstickAxis;
+            var thumbstickAxis = IsLeftHanded
+                ? InputBridge.Instance.LeftThumbstickAxis
+                : InputBridge.Instance.RightThumbstickAxis;
 
             var thumbstickInputDown = IsLeftHanded
                 ? InputBridge.Instance.LeftTriggerDown
