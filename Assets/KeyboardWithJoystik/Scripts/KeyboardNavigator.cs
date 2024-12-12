@@ -11,27 +11,24 @@ namespace BNG
         private VRKeyboardKey currentKey;
         private KeyboardRow currentRow;
         private bool isJoystickInput;
-        private bool isCursorInput;
-        private readonly float speed;
-        private float lastNavigationTime;
+        private bool isCursorInput; 
 
         public KeyboardNavigator(VRKeyboardKey currentKey,
             KeyboardRow currentRow, Keyboard currentKeyboard,
-            KeyboardKeyHighlighter keyboardKeyHighlighter, VRKeyboardWithJoystick keyboardWithJoystick, float speed)
+            KeyboardKeyHighlighter keyboardKeyHighlighter, VRKeyboardWithJoystick keyboardWithJoystick)
         {
             this.currentKey = currentKey;
             this.currentRow = currentRow;
             this.currentKeyboard = currentKeyboard;
             this.keyboardKeyHighlighter = keyboardKeyHighlighter;
             this.keyboardWithJoystick = keyboardWithJoystick;
-            this.speed = speed;
             keyboardWithJoystick.InputTypeChanged += OnInputTypeChanged;
             keyboardWithJoystick.NavigationModeChanged += OnNavigationModeChanged;
         }
 
         private void OnNavigationModeChanged(VRKeyboardWithJoystick.NavigationMode obj)
         {
-            if (obj != VRKeyboardWithJoystick.NavigationMode.Key)
+            if (obj != VRKeyboardWithJoystick.NavigationMode.Key )
                 keyboardKeyHighlighter.ResetHighlight();
         }
 
@@ -50,11 +47,6 @@ namespace BNG
 
             if (thumbstickAxis == Vector2.zero)
                 return;
-            
-            var currentTime = Time.time;
-            if (currentTime - lastNavigationTime < speed)
-                return;
-            lastNavigationTime = currentTime;
             
             if (Mathf.Abs(thumbstickAxis.x) > Mathf.Abs(thumbstickAxis.y))
             {

@@ -17,6 +17,7 @@ namespace BNG
         [SerializeField] private TeleportDestination teleportDestination;
         [SerializeField] private List<Keyboard> keyboards;
         [SerializeField] private float speed;
+        [SerializeField] private float inputDelay = 0.03f;
 
         private KeyboardNavigator keyboardNavigator;
         private CursorNavigator cursorNavigator;
@@ -26,6 +27,11 @@ namespace BNG
         private VRKeyboardKey currentKey;
         private KeyboardRow currentRow;
         private Keyboard currentKeyboard;
+        private float lastThumbstickInputTime;
+        [SerializeField] private Vector2 thumbstickAxis;
+        private SmoothLocomotion smoothLocomotion;
+        private PlayerRotation playerRotation;
+        private UIPointer[] pointers;
 
         public enum NavigationMode
         {
@@ -35,12 +41,16 @@ namespace BNG
 
         public string Mode => navigationMode.ToString();
         public bool IsLeftHanded { get; private set; }
-        public bool IsJoystickInput { get; private set; } = true;
+        public bool IsJoystickInput { get; private set; }
 
         private void OnValidate() => keyboards = GetComponentsInChildren<Keyboard>(includeInactive: true).ToList();
 
         protected void Awake()
         {
+            smoothLocomotion = player.GetComponent<SmoothLocomotion>();
+            playerRotation = player.GetComponent<PlayerRotation>();
+            pointers = player.GetComponentsInChildren<UIPointer>();
+
             var canvasRectTransform = GetComponent<RectTransform>();
             var canvasSizeDelta = canvasRectTransform.sizeDelta;
             var localScale = canvasRectTransform.localScale;
@@ -51,11 +61,13 @@ namespace BNG
 
             keyboardKeyHighlighter = new KeyboardKeyHighlighter(currentKey);
             keyboardNavigator =
-                new KeyboardNavigator(currentKey, currentRow, currentKeyboard, keyboardKeyHighlighter, this, speed);
+                new KeyboardNavigator(currentKey, currentRow, currentKeyboard, keyboardKeyHighlighter, this);
             cursorNavigator =
                 new CursorNavigator(CreateCursor(), canvasSizeDelta, localScale, currentKeyboard,
-                    keyboardKeyHighlighter, this, speed);
+                    keyboardKeyHighlighter, this);
             SubscribeToSpecialKeys();
+
+            NavigationModeChanged?.Invoke(navigationMode);
         }
 
         private GameObject CreateCursor()
@@ -72,25 +84,29 @@ namespace BNG
             if (!IsJoystickInput)
                 return;
 
-            var thumbstickAxis = IsLeftHanded
+            thumbstickAxis = IsLeftHanded
                 ? InputBridge.Instance.LeftThumbstickAxis
                 : InputBridge.Instance.RightThumbstickAxis;
 
-            var thumbstickInput = IsLeftHanded
+            var thumbstickInputDown = IsLeftHanded
                 ? InputBridge.Instance.LeftTriggerDown
                 : InputBridge.Instance.RightTriggerDown;
 
             switch (navigationMode)
             {
                 case NavigationMode.Cursor:
-                    cursorNavigator.UpdateCursorPosition(thumbstickAxis);
+                    cursorNavigator.UpdateCursorPosition(thumbstickAxis * speed);
                     break;
                 case NavigationMode.Key:
-                    keyboardNavigator.NavigateKeys(thumbstickAxis);
+                    keyboardNavigator.NavigateKeys(thumbstickAxis * speed);
                     break;
             }
 
-            if (thumbstickInput && currentKey)
+            if (!thumbstickInputDown || !(Time.time - lastThumbstickInputTime > inputDelay))
+                return;
+
+            lastThumbstickInputTime = Time.time;
+            if (currentKey)
             {
                 currentKey.ThisButton.onClick.Invoke();
             }
@@ -144,17 +160,11 @@ namespace BNG
             IsJoystickInput = !IsJoystickInput;
             InputTypeChanged?.Invoke(IsJoystickInput);
 
-            if (!IsJoystickInput)
-            {
-                player.TryGetComponent<LocomotionManager>(out var locomotionManager);
-                locomotionManager.ChangeLocomotionType(LocomotionType.None);
-                player.TryGetComponent<PlayerRotation>(out var playerRotation);
-                playerRotation.AllowInput = false;
-            }
-            else
-            {
-                
-            }
+            smoothLocomotion.AllowInput = !IsJoystickInput;
+            playerRotation.AllowInput = !IsJoystickInput;
+
+            foreach (var pointer in pointers)
+                pointer.gameObject.SetActive(!IsJoystickInput);
         }
 
         public void ToggleLeftHanded()
